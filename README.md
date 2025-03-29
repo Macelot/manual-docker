@@ -100,7 +100,6 @@ FROM python:3.10
 WORKDIR /app
 COPY . .
 RUN pip install -r requirements.txt
-CMD ["python", "app.py"]
 ```
 
 **docker-compose.yml:**
@@ -186,7 +185,6 @@ FROM python:3.10
 WORKDIR /app
 COPY . .
 RUN pip install -r requirements.txt
-CMD ["python", "app.py"]
 ```
 Este arquivo define uma imagem personalizada para rodar um aplicativo Python dentro do Docker.
 
@@ -334,5 +332,66 @@ Isso executará o script dentro do ambiente Docker e mostrará os registros no b
 Agora seu ambiente Docker com PostgreSQL e Python está pronto! 🚀
 
 
+-------
+
+Para visualizar algo no navegador, é necessário que o `app.py` rode um servidor web, como Flask. Atualmente, o `database.py` apenas executa comandos no banco de dados, sem disponibilizar uma interface web.
+
+Para visualizar no navegador, siga estes passos:
+
+1. **Criar o arquivo `app.py`**  
+   Crie um novo arquivo `app.py` na pasta `projeto-docker` e adicione:
+   ```python
+   from flask import Flask, jsonify
+   import psycopg2
+   import os
+
+   app = Flask(__name__)
+
+   DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@db:5432/postgres")
+
+   def get_db_connection():
+       return psycopg2.connect(DATABASE_URL)
+
+   @app.route('/')
+   def home():
+       return "API está rodando! Acesse /clientes para ver os dados."
+
+   @app.route('/clientes')
+   def get_clientes():
+       conn = get_db_connection()
+       cur = conn.cursor()
+       cur.execute("SELECT * FROM clientes")
+       clientes = cur.fetchall()
+       cur.close()
+       conn.close()
+
+       return jsonify(clientes)
+
+   if __name__ == '__main__':
+       app.run(host='0.0.0.0', port=5000)
+   ```
+   Isso cria um servidor Flask com:
+   - Rota `/` para indicar que a API está rodando.
+   - Rota `/clientes` para listar todos os clientes cadastrados no banco.
+
+2. **Atualizar o `Dockerfile`**  
+   Ajuste o `CMD` no `Dockerfile` para rodar o `app.py`:
+   ```dockerfile
+   CMD ["python", "app.py"]
+   ```
+
+3. **Subir o ambiente Docker**  
+   Rode os seguintes comandos para reconstruir e iniciar os contêineres:
+   ```sh
+   docker-compose down
+   docker-compose up -d --build
+   ```
+
+4. **Acessar a API no navegador**  
+   Agora, abra o navegador e acesse:
+   - **`http://localhost:5001/`** → Verifica se a API está rodando.
+   - **`http://localhost:5001/clientes`** → Lista todos os clientes cadastrados.
+
+Dessa forma, será possível ver os dados no navegador! 🚀
 
 
