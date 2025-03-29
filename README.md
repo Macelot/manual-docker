@@ -1,7 +1,14 @@
-# manual-docker
-Aqui estão alguns exemplos do comando `docker pull` para diferentes situações e tipos de aplicações:  
+# Manual Docker
+
+## Sumário
+
+- [1. Exemplos do comando `docker pull`](#1-exemplos-do-comando-docker-pull)
+- [2. Diferença entre `Dockerfile` e `docker-compose.yml`](#2-diferença-entre-dockerfile-e-docker-composeyml)
+- [3. Quando usar cada um?](#3-quando-usar-cada-um)
 
 ---
+
+## 1. Exemplos do comando `docker pull`
 
 ### **1. Baixar uma imagem do Node.js para desenvolvimento frontend/backend**  
 ```sh
@@ -83,32 +90,93 @@ docker pull openjdk:21
 
 ---
 
-### **9. Baixar a imagem do Alpine Linux para contêineres leves**  
-```sh
-docker pull alpine:latest
-```
-**Quando usar?**  
-- Para criar imagens Docker **otimizadas e leves**.  
-- Muito usado em aplicações de **microsserviços** e ambientes de produção.  
+## 2. Diferença entre `Dockerfile` e `docker-compose.yml`
+
+| Característica | Dockerfile | docker-compose.yml |
+|--------------|------------|-----------------|
+| **O que é?** | Um arquivo para **construir** uma imagem personalizada | Um arquivo para **orquestrar** múltiplos contêineres |
+| **Finalidade** | Define **como construir** uma imagem Docker | Define **como rodar** os contêineres e suas conexões |
+| **Principais comandos** | `FROM`, `RUN`, `COPY`, `WORKDIR`, `CMD`, `ENTRYPOINT` | `services`, `volumes`, `networks`, `depends_on`, `environment` |
+| **Execução** | Usado com `docker build` para criar uma imagem | Usado com `docker-compose up` para rodar múltiplos serviços |
+| **Uso ideal** | Quando você precisa **personalizar** um ambiente com bibliotecas, dependências, configurações | Quando precisa rodar **múltiplos contêineres juntos** (exemplo: app + banco de dados + cache) |
 
 ---
 
-### **10. Baixar o Jenkins para CI/CD**  
-```sh
-docker pull jenkins/jenkins:lts
+## 3. Quando usar cada um?
+
+### **Quando usar só o `Dockerfile`?**
+- Quando você precisa apenas de uma imagem personalizada, sem múltiplos serviços.
+
+Exemplo:
+```dockerfile
+FROM node:20
+WORKDIR /app
+COPY . .
+RUN npm install
+CMD ["node", "server.js"]
 ```
-**Quando usar?**  
-- Para configurar um **servidor de integração contínua (CI/CD)** em um contêiner.  
-- Para executar **pipelines automatizados** de build, teste e deploy.  
 
----
-
-### **11. Baixar TensorFlow para Machine Learning e IA**  
+Execução:
 ```sh
-docker pull tensorflow/tensorflow:latest
+docker build -t minha-app .
+docker run -p 3000:3000 minha-app
 ```
-**Quando usar?**  
-- Para treinar e rodar modelos de **Deep Learning** sem precisar instalar dependências localmente.  
-- Para desenvolvimento de **IA** com suporte a **GPU** (caso tenha uma placa NVIDIA).  
 
----
+### **Quando usar só o `docker-compose.yml`?**
+- Quando você precisa apenas orquestrar serviços prontos, sem personalizar imagens.
+
+Exemplo:
+```yaml
+version: "3"
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+```
+
+Execução:
+```sh
+docker-compose up -d
+```
+
+### **Quando usar os dois juntos?**
+- Quando você precisa de uma imagem personalizada **e** de serviços extras.
+
+Exemplo:
+**Dockerfile:**
+```dockerfile
+FROM node:20
+WORKDIR /app
+COPY . .
+RUN npm install
+CMD ["node", "server.js"]
+```
+
+**docker-compose.yml:**
+```yaml
+version: "3"
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+```
+
+Execução:
+```sh
+docker-compose up --build
+```
+
