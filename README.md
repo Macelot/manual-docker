@@ -164,7 +164,31 @@ Os alunos deverão criar um ambiente Docker utilizando um contêiner para um ban
    ```sh
    mkdir projeto-docker && cd projeto-docker
    ```
-2. Criar um arquivo `docker-compose.yml` com o seguinte conteúdo:
+2. Criar os dois arquivos: Dockerfile:
+```Dockerfile
+# Usando uma imagem base do Python
+FROM python:3.9-slim
+
+# Definindo o diretório de trabalho dentro do container
+WORKDIR /app
+
+# Copiando o arquivo de requisitos para o container
+COPY requirements.txt .
+
+# Instalando as dependências
+RUN pip install -r requirements.txt
+
+# Copiando o código da aplicação para o container
+COPY . .
+
+# Expondo a porta 5000
+EXPOSE 5000
+
+# Comando para rodar a aplicação
+CMD ["python", "app.py"]
+```
+ 
+e `docker-compose.yml` com o seguinte conteúdo:
    ```yaml
    version: "3"
    services:
@@ -176,7 +200,15 @@ Os alunos deverão criar um ambiente Docker utilizando um contêiner para um ban
        ports:
          - "5432:5432"
    ```
-3. Criar um script Python chamado `database.py` para conectar ao PostgreSQL:
+   Abrir o programa Docker Desktop
+   Testas seu deu certo até aqui: 
+```
+docker build -t meu-flask-app .
+```   
+
+---
+
+4. Criar um script Python chamado `database.py` para conectar ao PostgreSQL:
    ```python
    import psycopg2
 
@@ -200,11 +232,11 @@ Os alunos deverão criar um ambiente Docker utilizando um contêiner para um ban
    cur.close()
    conn.close()
    ```
-4. Executar o seguinte comando para rodar o banco de dados:
+5. Executar o seguinte comando para rodar o banco de dados:
    ```sh
    docker-compose up -d
    ```
-5. Executar o script Python para testar a conexão e inserção de dados:
+6. Executar o script Python para testar a conexão e inserção de dados:
    ```sh
    python database.py
    ```
