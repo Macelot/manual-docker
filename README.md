@@ -161,77 +161,178 @@ SELECT * FROM clientes;
 
 ## 5. Atividade prática: Criando um ambiente Docker
 
-### **Objetivo**
+# Manual: Criando um Ambiente Docker com PostgreSQL e Python
+
+## 🎯 Objetivo
 Os alunos deverão criar um ambiente Docker utilizando um contêiner para um banco de dados PostgreSQL e executar consultas via um script Python.
 
-### **Instruções**
-1. Criar uma pasta chamada `projeto-docker` e acessar o diretório:
-   ```sh
-   mkdir projeto-docker && cd projeto-docker
-   ```
-2. Criar os dois arquivos: Dockerfile:
-```Dockerfile
+---
+
+## 🛠 Passo a Passo
+
+### 1️⃣ Criar a pasta do projeto
+Abra o terminal e execute:
+```sh
+mkdir projeto-docker && cd projeto-docker
+```
+Essa pasta será onde todos os arquivos do projeto serão armazenados.
+
+---
+
+### 2️⃣ Criar o arquivo `Dockerfile`
+Dentro da pasta `projeto-docker`, crie um arquivo chamado `Dockerfile` e adicione o seguinte conteúdo:
+```dockerfile
 FROM python:3.10
 WORKDIR /app
 COPY . .
 RUN pip install -r requirements.txt
 CMD ["python", "app.py"]
 ```
- 
-e `docker-compose.yml` com o seguinte conteúdo:
-   ```yaml
-   version: "3"
-   services:
-     db:
-       image: postgres:16
-       environment:
-         POSTGRES_USER: user
-         POSTGRES_PASSWORD: password
-       ports:
-         - "5432:5432"
-   ```
-   Abrir o programa Docker Desktop
-   Testas seu deu certo até aqui: 
-```
-docker build -t meu-flask-app .
-```   
+Este arquivo define uma imagem personalizada para rodar um aplicativo Python dentro do Docker.
 
 ---
 
-4. Criar um script Python chamado `database.py` para conectar ao PostgreSQL:
-   ```python
-   import psycopg2
+### 3️⃣ Criar o arquivo `docker-compose.yml`
+Crie um arquivo chamado `docker-compose.yml` na pasta `projeto-docker` e adicione o seguinte conteúdo:
+```yaml
+version: "3.8"
+services:
+  app:
+    build: .
+    volumes:
+      - .:/app
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/postgres
+    depends_on:
+      - db
+    ports:
+      - "5001:5000"
+  
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5455:5432"
+```
+Este arquivo define dois serviços:
+- `app`: O aplicativo Python que será executado no Docker.
+- `db`: O banco de dados PostgreSQL rodando no contêiner.
 
-   conn = psycopg2.connect(
-       dbname="postgres",
-       user="user",
-       password="password",
-       host="localhost",
-       port="5432"
-   )
+O mapeamento de portas garante que:
+- O banco de dados estará disponível na porta **5455** no seu computador, mas **5432** dentro do Docker.
+- O app rodará na porta **5001** no seu computador, mas **5000** dentro do Docker.
 
-   cur = conn.cursor()
-   cur.execute("CREATE TABLE IF NOT EXISTS clientes (id SERIAL PRIMARY KEY, nome VARCHAR(100), email VARCHAR(100))")
-   cur.execute("INSERT INTO clientes (nome, email) VALUES ('Carlos Lima', 'carlos@email.com')")
-   conn.commit()
+---
 
-   cur.execute("SELECT * FROM clientes")
-   for row in cur.fetchall():
-       print(row)
+### 4️⃣ Criar o arquivo `requirements.txt`
+Na pasta `projeto-docker`, crie um arquivo chamado `requirements.txt` e adicione:
+```
+flask
+psycopg2
+```
+Isso garante que os pacotes necessários para rodar o app sejam instalados no contêiner.
 
-   cur.close()
-   conn.close()
-   ```
-5. Executar o seguinte comando para rodar o banco de dados:
-   ```sh
-   docker-compose up -d
-   ```
-6. Executar o script Python para testar a conexão e inserção de dados:
-   ```sh
-   python database.py
-   ```
+---
 
-### **Desafio**
-- Criar uma nova tabela `produtos` e inserir alguns dados para teste.
-- Consultar todos os produtos cadastrados.
+### 5️⃣ Criar o script Python `database.py`
+Crie um arquivo chamado `database.py` e adicione o seguinte código:
+```python
+import psycopg2
+import os
+
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@db:5432/postgres")
+
+conn = psycopg2.connect(DATABASE_URL)
+cur = conn.cursor()
+
+# Criar tabela clientes
+cur.execute("""
+    CREATE TABLE IF NOT EXISTS clientes (
+        id SERIAL PRIMARY KEY,
+        nome VARCHAR(100),
+        email VARCHAR(100)
+    )
+""")
+
+# Inserir um registro
+cur.execute("INSERT INTO clientes (nome, email) VALUES ('Carlos Lima', 'carlos@email.com')")
+conn.commit()
+
+# Consultar registros
+cur.execute("SELECT * FROM clientes")
+for row in cur.fetchall():
+    print(row)
+
+cur.close()
+conn.close()
+```
+Este script:
+1. Conecta ao banco de dados PostgreSQL.
+2. Cria a tabela `clientes` caso ainda não exista.
+3. Insere um cliente no banco de dados.
+4. Recupera e exibe todos os registros da tabela.
+
+---
+
+### 6️⃣ Subir o ambiente Docker
+Agora que todos os arquivos foram criados, inicie o Docker e execute:
+```sh
+docker-compose up -d --build
+```
+Isso:
+- Constrói e inicia os contêineres.
+- O banco de dados será iniciado no contêiner `db`.
+- O aplicativo Python será iniciado no contêiner `app`.
+
+Verifique se os contêineres estão rodando:
+```sh
+docker ps
+```
+
+---
+
+### 7️⃣ Executar o script `database.py`
+Para rodar o script dentro do contêiner:
+```sh
+docker-compose run app python database.py
+```
+Isso executará o script dentro do ambiente Docker e mostrará os registros no banco.
+
+---
+
+## 🚀 Desafio
+1. Criar uma nova tabela `produtos` com os campos `id`, `nome` e `preco`.
+2. Inserir alguns produtos de exemplo.
+3. Exibir todos os produtos cadastrados.
+
+---
+
+## 🔧 Comandos úteis
+- Parar e remover os contêineres:
+  ```sh
+  docker-compose down
+  ```
+- Verificar logs dos contêineres:
+  ```sh
+  docker-compose logs
+  ```
+
+- Verificar logs do app:
+  ```sh
+  docker-compose logs app
+  ```
+  
+- Acessar o contêiner do banco de dados e rodar comandos SQL:
+  ```sh
+  docker exec -it projeto-docker-db-1 psql -U user -d postgres
+  ```
+
+  
+
+Agora seu ambiente Docker com PostgreSQL e Python está pronto! 🚀
+
+
+
 
