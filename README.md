@@ -166,25 +166,10 @@ Os alunos deverão criar um ambiente Docker utilizando um contêiner para um ban
    ```
 2. Criar os dois arquivos: Dockerfile:
 ```Dockerfile
-# Usando uma imagem base do Python
-FROM python:3.9-slim
-
-# Definindo o diretório de trabalho dentro do container
+FROM python:3.10
 WORKDIR /app
-
-# Copiando o arquivo de requisitos para o container
-COPY requirements.txt .
-
-# Instalando as dependências
-RUN pip install -r requirements.txt
-
-# Copiando o código da aplicação para o container
 COPY . .
-
-# Expondo a porta 5000
-EXPOSE 5000
-
-# Comando para rodar a aplicação
+RUN pip install -r requirements.txt
 CMD ["python", "app.py"]
 ```
  
