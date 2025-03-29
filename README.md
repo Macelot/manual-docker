@@ -5,88 +5,30 @@
 - [1. Exemplos do comando `docker pull`](#1-exemplos-do-comando-docker-pull)
 - [2. Diferença entre `Dockerfile` e `docker-compose.yml`](#2-diferença-entre-dockerfile-e-docker-composeyml)
 - [3. Quando usar cada um?](#3-quando-usar-cada-um)
+- [4. Trabalhando com PostgreSQL no Docker](#4-trabalhando-com-postgresql-no-docker)
+- [5. Atividade prática: Criando um ambiente Docker](#5-atividade-prática-criando-um-ambiente-docker)
 
 ---
 
 ## 1. Exemplos do comando `docker pull`
 
-### **1. Baixar uma imagem do Node.js para desenvolvimento frontend/backend**  
+### **1. Baixar uma imagem do Python para desenvolvimento**  
 ```sh
-docker pull node:20
+docker pull python:3.10
 ```
 **Quando usar?**  
-- Para desenvolver aplicações **Node.js** (React, Vue, Angular, Express.js, NestJS).  
-- Ideal para criar contêineres para **builds e execução** de projetos Node.js.  
+- Para desenvolver aplicações **Python**.  
+- Ideal para criar contêineres para **scripts, APIs e aplicações web**.
 
 ---
 
-### **2. Baixar uma imagem do Nginx para servir aplicações web**  
-```sh
-docker pull nginx:latest
-```
-**Quando usar?**  
-- Para hospedar aplicações web estáticas, como **React, Angular ou Vue.js**.  
-- Como **proxy reverso** para APIs e serviços backend.  
-
----
-
-### **3. Baixar o PostgreSQL para bancos de dados**  
+### **2. Baixar uma imagem do PostgreSQL para bancos de dados**  
 ```sh
 docker pull postgres:16
 ```
 **Quando usar?**  
 - Para rodar um banco de dados **PostgreSQL** localmente em um contêiner.  
-- Útil para aplicações que usam **ORMs como Sequelize, Prisma ou SQLAlchemy**.  
-
----
-
-### **4. Baixar o MySQL para bancos de dados relacionais**  
-```sh
-docker pull mysql:8
-```
-**Quando usar?**  
-- Quando precisar de um banco **MySQL** para testes e desenvolvimento.  
-- Para rodar sistemas que utilizam MySQL, como **WordPress, Magento, Joomla**.  
-
----
-
-### **5. Baixar o MongoDB para aplicações NoSQL**  
-```sh
-docker pull mongo:7
-```
-**Quando usar?**  
-- Para desenvolver APIs com **MongoDB** e frameworks como **Mongoose**.  
-- Aplicações que utilizam um banco de dados **NoSQL** para armazenar documentos JSON.  
-
----
-
-### **6. Baixar o Redis para cache e filas de mensagens**  
-```sh
-docker pull redis:latest
-```
-**Quando usar?**  
-- Para criar **cache em memória** para acelerar consultas e reduzir a carga do banco.  
-- Como **fila de mensagens** em aplicações que utilizam **Celery, Sidekiq ou BullMQ**.  
-
----
-
-### **7. Baixar uma imagem do Python para desenvolvimento de scripts e APIs**  
-```sh
-docker pull python:3.12
-```
-**Quando usar?**  
-- Para desenvolver aplicações **Flask, Django** ou scripts em Python.  
-- Para rodar **Jupyter Notebooks** para análise de dados e aprendizado de máquina.  
-
----
-
-### **8. Baixar o OpenJDK para rodar aplicações Java**  
-```sh
-docker pull openjdk:21
-```
-**Quando usar?**  
-- Para rodar aplicações Java, como **Spring Boot, Quarkus ou Micronaut**.  
-- Para compilar e executar projetos **Maven ou Gradle** em um ambiente isolado.  
+- Útil para aplicações que usam **ORMs como SQLAlchemy**.
 
 ---
 
@@ -109,17 +51,17 @@ docker pull openjdk:21
 
 Exemplo:
 ```dockerfile
-FROM node:20
+FROM python:3.10
 WORKDIR /app
 COPY . .
-RUN npm install
-CMD ["node", "server.js"]
+RUN pip install -r requirements.txt
+CMD ["python", "app.py"]
 ```
 
 Execução:
 ```sh
 docker build -t minha-app .
-docker run -p 3000:3000 minha-app
+docker run -p 5000:5000 minha-app
 ```
 
 ### **Quando usar só o `docker-compose.yml`?**
@@ -149,11 +91,11 @@ docker-compose up -d
 Exemplo:
 **Dockerfile:**
 ```dockerfile
-FROM node:20
+FROM python:3.10
 WORKDIR /app
 COPY . .
-RUN npm install
-CMD ["node", "server.js"]
+RUN pip install -r requirements.txt
+CMD ["python", "app.py"]
 ```
 
 **docker-compose.yml:**
@@ -163,7 +105,7 @@ services:
   app:
     build: .
     ports:
-      - "3000:3000"
+      - "5000:5000"
     depends_on:
       - db
   db:
@@ -179,4 +121,95 @@ Execução:
 ```sh
 docker-compose up --build
 ```
+
+---
+
+## 4. Trabalhando com PostgreSQL no Docker
+
+### **Criando uma tabela e inserindo dados**
+Após iniciar o contêiner do PostgreSQL com Docker, conecte-se ao banco de dados:
+```sh
+docker exec -it <id_do_container> psql -U user -d postgres
+```
+
+Criação de uma tabela chamada `clientes`:
+```sql
+CREATE TABLE clientes (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(100),
+    email VARCHAR(100)
+);
+```
+
+Inserindo dados na tabela:
+```sql
+INSERT INTO clientes (nome, email) VALUES ('João Silva', 'joao@email.com');
+INSERT INTO clientes (nome, email) VALUES ('Maria Souza', 'maria@email.com');
+```
+
+Consultando os dados inseridos:
+```sql
+SELECT * FROM clientes;
+```
+
+---
+
+## 5. Atividade prática: Criando um ambiente Docker
+
+### **Objetivo**
+Os alunos deverão criar um ambiente Docker utilizando um contêiner para um banco de dados PostgreSQL e executar consultas via um script Python.
+
+### **Instruções**
+1. Criar uma pasta chamada `projeto-docker` e acessar o diretório:
+   ```sh
+   mkdir projeto-docker && cd projeto-docker
+   ```
+2. Criar um arquivo `docker-compose.yml` com o seguinte conteúdo:
+   ```yaml
+   version: "3"
+   services:
+     db:
+       image: postgres:16
+       environment:
+         POSTGRES_USER: user
+         POSTGRES_PASSWORD: password
+       ports:
+         - "5432:5432"
+   ```
+3. Criar um script Python chamado `database.py` para conectar ao PostgreSQL:
+   ```python
+   import psycopg2
+
+   conn = psycopg2.connect(
+       dbname="postgres",
+       user="user",
+       password="password",
+       host="localhost",
+       port="5432"
+   )
+
+   cur = conn.cursor()
+   cur.execute("CREATE TABLE IF NOT EXISTS clientes (id SERIAL PRIMARY KEY, nome VARCHAR(100), email VARCHAR(100))")
+   cur.execute("INSERT INTO clientes (nome, email) VALUES ('Carlos Lima', 'carlos@email.com')")
+   conn.commit()
+
+   cur.execute("SELECT * FROM clientes")
+   for row in cur.fetchall():
+       print(row)
+
+   cur.close()
+   conn.close()
+   ```
+4. Executar o seguinte comando para rodar o banco de dados:
+   ```sh
+   docker-compose up -d
+   ```
+5. Executar o script Python para testar a conexão e inserção de dados:
+   ```sh
+   python database.py
+   ```
+
+### **Desafio**
+- Criar uma nova tabela `produtos` e inserir alguns dados para teste.
+- Consultar todos os produtos cadastrados.
 
