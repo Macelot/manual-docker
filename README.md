@@ -79,6 +79,11 @@ services:
     ports:
       - "5432:5432"
 ```
+caso já tenha instalado o Banco de dados PostgreSQL, vai dar uma mensagem de porta em uso. Para resolver pode colocar outra porta no computador local, por exemplo:
+```yaml
+    ports:
+      - "5455:5432"
+```
 
 Execução:
 ```sh
