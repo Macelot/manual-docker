@@ -393,5 +393,5 @@ Para visualizar no navegador, siga estes passos:
    - **`http://localhost:5001/clientes`** → Lista todos os clientes cadastrados.
 
 Dessa forma, será possível ver os dados no navegador! 🚀
-
+Faça o mesmo para os produtos, isto é, crie a rota /produtos.
 
